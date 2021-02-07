@@ -1,1 +1,1 @@
-# FinanceDataAnalysis
+#졸업작품을 위한 금융 데이터 분석 공부
