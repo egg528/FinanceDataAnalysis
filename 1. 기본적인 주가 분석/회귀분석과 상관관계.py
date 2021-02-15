@@ -47,6 +47,7 @@ plt.show()
 from scipy import stats
 regr = stats.linregress(df['NASDAQ'], df['KOSPI'])
 regr
+print(regr)
 
 #상관계수
 df.corr()

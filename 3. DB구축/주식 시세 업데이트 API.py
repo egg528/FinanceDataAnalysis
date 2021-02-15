@@ -8,7 +8,8 @@ from threading import Timer
 class DBUpdater:
     def __init__(self):
         """생성자: MariaDB 연결 및 종목코드 딕셔너리 생성"""
-        self.conn = pymysql.connect(host='localhost', port=3300, db='investor', user='root', passwd='1234',charset='utf8')
+        self.conn = pymysql.connect(host='localhost', port=3300, db='investor', user='root', passwd='1234',
+                                    charset='utf8')
         with self.conn.cursor() as curs:
             sql = """
             CREATE TABLE IF NOT EXISTS company_info(
@@ -55,7 +56,7 @@ class DBUpdater:
         sql = "SELECT * FROM company_info"
         df = pd.read_sql(sql, self.conn)
         for idx in range(len(df)):
-            self.codes[df['code']] = df['company'].values[idx]
+            self.codes[df['code'].values[idx]] = df['company'].values[idx]
         with self.conn.cursor() as curs:
             sql = "SELECT max(last_update) FROM company_info"
             curs.execute(sql)
@@ -81,18 +82,18 @@ class DBUpdater:
         try:
             url = f"http://finance.naver.com/item/sise_day.nhn?code={code}"
             html = BeautifulSoup(requests.get(url,
-                headers={'User-agent': 'Mozilla/5.0'}).text, "lxml")
+                                              headers={'User-agent': 'Mozilla/5.0'}).text, "lxml")
             pgrr = html.find("td", class_="pgRR")
             if pgrr is None:
                 return None
-            s = str(pgrr.a['href']).split('=')
+            s = str(pgrr.a["href"]).split('=')
             lastpage = s[-1]
             df = pd.DataFrame()
-            pages = min(int(lastpage, pages_to_fetch))
-            for page in range(1, pages+1):
+            pages = min(int(lastpage), pages_to_fetch)
+            for page in range(1, pages + 1):
                 pg_url = '{}&page={}'.format(url, page)
                 df = df.append(pd.read_html(requests.get(pg_url,
-                    headers={'User-agent': 'Mozilla/5.0'}).text)[0])
+                                                         headers={'User-agent': 'Mozilla/5.0'}).text)[0])
                 tmnow = datetime.now().strftime('%Y-%m-%d %H:%M')
                 print('[{}] {} ({}) : {:04d}/{:04d} pages are downloading...'.
                       format(tmnow, company, code, page, pages), end="\r")
@@ -101,10 +102,11 @@ class DBUpdater:
             df['date'] = df['date'].replace('.', '-')
             df = df.dropna()
             df[['close', 'diff', 'open', 'high', 'low', 'volume']] = df[['close',
-                'diff', 'open', 'high', 'low', 'volume']].astype(int)
+                                                                         'diff', 'open', 'high', 'low',
+                                                                         'volume']].astype(int)
             df = df[['date', 'open', 'high', 'low', 'close', 'diff', 'volume']]
         except Exception as e:
-            print('Exception occured: ', str(e))
+            print('Exception occured :', str(e))
             return None
         return df
 
@@ -123,9 +125,9 @@ class DBUpdater:
 
     def update_daily_price(self, pages_to_fetch):
         """KRX 상장법인의 주식 시세를 네이버로부터 읽어서 DB에 업데이트"""
-        for idx, code in enumerate(self.code):
+        for idx, code in enumerate(self.codes):
             df = self.read_naver(code, self.codes[code], pages_to_fetch)
-            if df in None:
+            if df is None:
                 continue
             self.replace_into_db(df, idx, code, self.codes[code])
 
@@ -139,7 +141,7 @@ class DBUpdater:
         except FileNotFoundError:
             with open('config.json', 'w') as out_file:
                 pages_to_fetch = 100
-                config = {'pages_to_fetch'}
+                config = {'pages_to_fetch' : 1}
                 json.dump(config, out_file)
         self.update_daily_price(pages_to_fetch)
 

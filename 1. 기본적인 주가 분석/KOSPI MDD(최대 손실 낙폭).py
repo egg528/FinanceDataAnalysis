@@ -3,7 +3,7 @@ import yfinance as yf
 yf.pdr_override()
 import matplotlib.pyplot as plt
 
-kospi = pdr.get_data_yahoo('^KS11', '2004-01-04')
+kospi = pdr.get_data_yahoo('^KS11', '1990-01-04')
 
 window = 252
 peak = kospi['Adj Close'].rolling(window, min_periods=1).max()
@@ -17,3 +17,6 @@ plt.subplot(212)
 drawdown.plot(c='blue', label='KOSPI DD', grid=True, legend = True)
 max_dd.plot(c='red', label='KOSPI MDD', grid=True, legend=True)
 plt.show()
+
+print(max_dd.min())
+print(max_dd[max_dd == max_dd.min()])
